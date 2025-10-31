@@ -131,7 +131,7 @@ def finish():
         if col2.button("続ける"):
             st.session_state["dialog_finish"] = 1
             if st.session_state["messages"][0]["role"] == "human":
-                if int(st.session_state["user_id"]) % 2 == 1:
+                if int(st.session_state["user_id"]) % 3 == 1 or int(st.session_state["user_id"]) % 3 == 2:
                     st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})
                 else:
                     st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。皆さん、今のお悩みをご相談ください。"})
@@ -155,7 +155,7 @@ if st.session_state["dialog_finish"] == 2:
                 unsafe_allow_html=True
     )
     if st.session_state["messages"][0]["role"] == "human":
-        if int(st.session_state["user_id"]) % 2 == 1:
+        if int(st.session_state["user_id"]) % 3 == 1 or int(st.session_state["user_id"]) % 3 == 2:
             st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})
         else:
             st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。皆さん、今のお悩みをご相談ください。"})
@@ -166,8 +166,8 @@ if st.session_state["dialog_finish"] == 2:
     )
     st.stop()
 else: #最初〜会話中の提示
-    #条件分け（今はuser_idが奇数ならaiが相談する）
-    if int(st.session_state["user_id"]) % 2 == 1:
+    #条件分け（user_id%3が1か2ならaiが相談する）
+    if int(st.session_state["user_id"]) % 3 == 1 or int(st.session_state["user_id"]) % 3 == 2:
         st.write("ボットからのお悩み相談に乗りましょう。")
         if st.session_state["messages"] == []:
             st.session_state["messages"].append({"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})

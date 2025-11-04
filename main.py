@@ -35,14 +35,14 @@ if "user_id" not in st.session_state:
         if st.button("　開始　", type="primary", disabled=r):
             st.session_state["user_id"] = user_id
             #nameを一応データベースに保存
-            db.collection("users").document(st.session_state["user_id"]).set({
+            db.collection("users2").document(st.session_state["user_id"]).set({
                 "name": firestore.ArrayUnion([user_name])
             }, merge=True)
             st.rerun()
     st.stop()
 
 #Firestoreのデータへのアクセス
-ref = db.collection("users").document(st.session_state["user_id"]).collection("conversation").order_by("timestamp")
+ref = db.collection("users2").document(st.session_state["user_id"]).collection("conversation").order_by("timestamp")
 
 if "input" not in st.session_state:
     st.session_state["input"] = ""
@@ -98,7 +98,7 @@ def show_messages():
 #送信ボタンが押されたとき
 def send_message():
     #firestoreへの保存のためのアクセス
-    add_ref = db.collection("users").document(st.session_state["user_id"]).collection("conversation")
+    add_ref = db.collection("users2").document(st.session_state["user_id"]).collection("conversation")
     input = st.session_state["input"]
     if input == "":
         st.session_state["placeholder"] = "メッセージを入力してください！"

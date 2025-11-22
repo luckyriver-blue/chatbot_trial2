@@ -55,10 +55,7 @@ if "user_id" not in st.session_state or "id" not in st.session_state:
             user_doc = user_ref.get()
             #idがなかったら（初回ログイン時）
             if not user_doc.exists or "id" not in user_doc.to_dict():
-                if user_id.isdigit(): #学籍番号がアルファベットで始まらない時（検証などの時）
-                    id = user_id
-                else:
-                    id = get_id()
+                id = get_id()
                 #id（条件分けのための）をデータベースに保存
                 user_ref.set({
                     "id": id

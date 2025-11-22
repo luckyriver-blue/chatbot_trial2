@@ -21,19 +21,52 @@ if not firebase_admin._apps:
 # Firestoreのインスタンスを取得
 db = firestore.client()
 
+# firestoreから連番を受け取る
+def get_id(): 
+    counter_ref = db.collection("counters").document("last_id")
+    transaction = db.transaction()
+    if not counter_ref.get().exists:
+        counter_ref.set({"value": -1})
+
+    @firestore.transactional
+    def txn(transaction):
+        snapshot = counter_ref.get(transaction=transaction)
+        current = snapshot.get("value")
+        new_value = current + 1
+        transaction.update(counter_ref, {"value": new_value})
+        return new_value
+    
+    return txn(transaction)
 
 # セッションステートの初期化
-if "user_id" not in st.session_state:
+if "user_id" not in st.session_state or "id" not in st.session_state:
     #ログイン（実験参加者のid認証）
     st.text("学籍番号と名前を入力して、開始ボタンを押してください。")
     user_id = st.text_input("学籍番号")
     user_name = st.text_input("名前")
     r = True #開始ボタンは情報入力されないとdisabled
-    if user_id.isdigit() and user_name:
+    if user_id and user_name:
         r = False
+        
     with st.container(horizontal=True, horizontal_alignment="right"):
         if st.button("　開始　", type="primary", disabled=r):
             st.session_state["user_id"] = user_id
+            user_ref = db.collection("users2").document(st.session_state["user_id"])
+            user_doc = user_ref.get()
+            #idがなかったら（初回ログイン時）
+            if not user_doc.exists or "id" not in user_doc.to_dict():
+                if user_id.isdigit(): #学籍番号がアルファベットで始まらない時（検証などの時）
+                    id = user_id
+                else:
+                    id = get_id()
+                #id（条件分けのための）をデータベースに保存
+                user_ref.set({
+                    "id": id
+                }, merge=True)
+                st.session_state["id"] = id
+            else:
+                st.session_state["id"] = user_doc.to_dict()["id"]
+
             #nameを一応データベースに保存
             db.collection("users2").document(st.session_state["user_id"]).set({
                 "name": firestore.ArrayUnion([user_name])
@@ -111,10 +144,9 @@ def send_message():
     #最初の送信だったら、タイマー開始（最初のtimestampを控える）
     if st.session_state["time"] == None:
         st.session_state["time"] = ref.get()[0].to_dict()["timestamp"]
-    time = datetime.datetime.now(datetime.timezone.utc) - st.session_state["time"]
     st.session_state["messages"].append(input_message_data)
     #新しい入力応答を追加
-    bot = ChatBot(llm, user_id=st.session_state["user_id"])
+    bot = ChatBot(llm, user_id = st.session_state["id"]) 
     response = bot.chat(st.session_state["messages"])
     output_message_data = {"role": "ai", "content": response, "timestamp": firestore.SERVER_TIMESTAMP}
     add_ref.add(output_message_data)
@@ -131,7 +163,7 @@ def finish():
         if col2.button("続ける"):
             st.session_state["dialog_finish"] = 1
             if st.session_state["messages"][0]["role"] == "human":
-                if int(st.session_state["user_id"]) % 3 == 1 or int(st.session_state["user_id"]) % 3 == 2:
+                if int(st.session_state["id"]) % 3 == 1 or int(st.session_state["id"]) % 3 == 2:
                     st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})
                 else:
                     st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。皆さん、今のお悩みをご相談ください。"})
@@ -155,7 +187,7 @@ if st.session_state["dialog_finish"] == 2:
                 unsafe_allow_html=True
     )
     if st.session_state["messages"][0]["role"] == "human":
-        if int(st.session_state["user_id"]) % 3 == 1 or int(st.session_state["user_id"]) % 3 == 2:
+        if int(st.session_state["id"]) % 3 == 1 or int(st.session_state["id"]) % 3 == 2:
             st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})
         else:
             st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。皆さん、今のお悩みをご相談ください。"})
@@ -166,8 +198,8 @@ if st.session_state["dialog_finish"] == 2:
     )
     st.stop()
 else: #最初〜会話中の提示
-    #条件分け（user_id%3が1か2ならaiが相談する）
-    if int(st.session_state["user_id"]) % 3 == 1 or int(st.session_state["user_id"]) % 3 == 2:
+    #条件分け（id%3が1か2ならaiが相談する）
+    if int(st.session_state["id"]) % 3 == 1 or int(st.session_state["id"]) % 3 == 2:
         st.write("ボットからのお悩み相談に乗りましょう。")
         if st.session_state["messages"] == []:
             st.session_state["messages"].append({"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})

@@ -176,18 +176,18 @@ if st.session_state["time"] != None and datetime.datetime.now(datetime.timezone.
     if st.session_state["dialog_finish"] == 0:
         finish()
 
-
+#メッセージが空の時か、最初が人間のメッセージの時、最初のAIのメッセージを挿入する。
+if st.session_state["messages"] == [] or st.session_state["messages"][0]["role"] == "human":
+    if int(st.session_state["id"]) % 3 == 1 or int(st.session_state["id"]) % 3 == 2:
+        st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})
+    else:
+        st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。皆さん、今のお悩みをご相談ください。"})
 #会話終了後
 if st.session_state["dialog_finish"] == 2:
     st.markdown(
-                '<br>会話は終了しました。',
+                '<br>会話は終了しました。下のアンケートに回答ください。',
                 unsafe_allow_html=True
     )
-    if st.session_state["messages"][0]["role"] == "human":
-        if int(st.session_state["id"]) % 3 == 1 or int(st.session_state["id"]) % 3 == 2:
-            st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})
-        else:
-            st.session_state["messages"].insert(0, {"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。皆さん、今のお悩みをご相談ください。"})
     show_messages()
     st.markdown(
                 f'<br>これで会話は終了です。<br><a href="https://nagoyapsychology.qualtrics.com/jfe/form/SV_cRVxcN6bwLThcEK?user_id={st.session_state["user_id"]}">こちら</a>をクリックしてアンケートに答えてください。',
@@ -198,12 +198,8 @@ else: #最初〜会話中の提示
     #条件分け（id%3が1か2ならaiが相談する）
     if int(st.session_state["id"]) % 3 == 1 or int(st.session_state["id"]) % 3 == 2:
         st.write("ボットからのお悩み相談に乗りましょう。")
-        if st.session_state["messages"] == []:
-            st.session_state["messages"].append({"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。その中で悩んでいることがあります。相談にのってください。"})
     else:
         st.write("人間関係に関するお悩みをボットに相談しましょう。")
-        if st.session_state["messages"] == []:
-            st.session_state["messages"].append({"role": "ai", "content": "私は皆さんの相談にのるために設計されたチャットボットです。皆さん、今のお悩みをご相談ください。"})
     show_messages()
 
 

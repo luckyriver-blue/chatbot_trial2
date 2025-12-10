@@ -190,7 +190,7 @@ if st.session_state["dialog_finish"] == 2:
     )
     show_messages()
     st.markdown(
-                f'<br>これで会話は終了です。<br><a href="https://nagoyapsychology.qualtrics.com/jfe/form/SV_cRVxcN6bwLThcEK?user_id={st.session_state["user_id"]}">こちら</a>をクリックしてアンケートに答えてください。',
+                f'<br>これで会話は終了です。<br><a href="https://nagoyapsychology.qualtrics.com/jfe/form/SV_cRVxcN6bwLThcEK?user_id={st.session_state["user_id"]}&id={st.session_state["id"]}">こちら</a>をクリックしてアンケートに答えてください。',
                 unsafe_allow_html=True
     )
     st.stop()

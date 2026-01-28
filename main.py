@@ -49,7 +49,7 @@ if "user_id" not in st.session_state or "id" not in st.session_state:
         r = False
         
     with st.container(horizontal=True, horizontal_alignment="right"):
-        if st.button("　開始　", type="primary", disabled=r):
+        if st.button("開始", type="primary", disabled=r):
             st.session_state["user_id"] = user_id
             user_ref = db.collection("users2").document(st.session_state["user_id"])
             user_doc = user_ref.get()
@@ -167,7 +167,7 @@ def finish():
             st.rerun()
     with right_col:
         _, col2, _ = st.columns([1,2,1])    
-        if col2.button("　終了　", type="primary"):
+        if col2.button("終了する", type="primary"):
             st.session_state["dialog_finish"] = 2
             st.rerun()
 
@@ -185,12 +185,12 @@ if st.session_state["messages"] == [] or st.session_state["messages"][0]["role"]
 #会話終了後
 if st.session_state["dialog_finish"] == 2:
     st.markdown(
-                '<br>会話は終了しました。下のアンケートに回答ください。',
+                '<br>会話は終了しました。下のリンクからアンケートに回答ください。',
                 unsafe_allow_html=True
     )
     show_messages()
     st.markdown(
-                f'<br>これで会話は終了です。<br><a href="https://nagoyapsychology.qualtrics.com/jfe/form/SV_cRVxcN6bwLThcEK?user_id={st.session_state["user_id"]}&id={st.session_state["id"]}">こちら</a>をクリックしてアンケートに答えてください。',
+                f'<br>会話は終了しました。<br><a href="https://nagoyapsychology.qualtrics.com/jfe/form/SV_cRVxcN6bwLThcEK?user_id={st.session_state["user_id"]}&id={st.session_state["id"]}">こちら</a>をクリックしてアンケートに答えてください。',
                 unsafe_allow_html=True
     )
     st.stop()
@@ -219,6 +219,6 @@ with st._bottom:
     if st.session_state["dialog_finish"] == 0:
         st.stop()
     with finish_btn_col:
-        if st.button("　終了　", type="primary", use_container_width=True):
+        if st.button("終了", type="primary", use_container_width=True):
             st.session_state["dialog_finish"] = 2
             st.rerun()

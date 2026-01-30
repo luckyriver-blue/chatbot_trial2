@@ -157,9 +157,9 @@ if st.session_state["dialog_finish"] == 2:
 else: #最初〜会話中の提示
     #条件分け（id%3が1か2ならaiが相談する）
     if int(st.session_state["user_id"]) % 3 == 1 or int(st.session_state["user_id"]) % 3 == 2:
-        st.write("ボットからのお悩み相談に乗りましょう。")
+        st.write("**ボットからのお悩み相談に乗りましょう。**")
     else:
-        st.write("人間関係に関するお悩みをボットに相談しましょう。")
+        st.write("**人間関係に関するお悩みをボットに相談しましょう。**")
     show_messages()
 
 

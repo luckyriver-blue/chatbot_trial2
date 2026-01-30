@@ -86,6 +86,7 @@ def show_messages():
 
 
 #送信ボタンが押されたとき
+add_ref = db.collection("users2").document(st.session_state["user_id"]).collection("conversation")
 def send_message():
     #firestoreへの保存のためのアクセス
     add_ref = db.collection("users2").document(st.session_state["user_id"]).collection("conversation")
@@ -102,6 +103,9 @@ def send_message():
     if st.session_state["time"] == None:
         st.session_state["time"] = ref.get()[0].to_dict()["timestamp"]
     st.session_state["messages"].append(input_message_data)
+
+#応答を生成する関数
+def generate_response():
     #新しい入力応答を追加
     bot = ChatBot(llm, user_id = st.session_state["user_id"]) 
     response = bot.chat(st.session_state["messages"])
@@ -161,7 +165,11 @@ else: #最初〜会話中の提示
     else:
         st.write("**人間関係に関するお悩みをボットに相談しましょう。**")
     show_messages()
-
+    #最後のメッセージが人間だったら応答を生成する関数
+    if st.session_state["messages"][-1]["role"] == "human":
+        generate_response()
+        st.rerun()
+        
 
 with st._bottom:
     left_col, right_col, finish_btn_col = st.columns([4,1,1], vertical_alignment="bottom")

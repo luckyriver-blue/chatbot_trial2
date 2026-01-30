@@ -66,7 +66,6 @@ class ChatBot:
         def get_response(state: State):
             formatted = self.prompt.format_messages(messages=state["messages"])
             response = self.llm.invoke(formatted)
-            #print(response)
             return {"messages": state["messages"] + [response]}
 
         #グラフを作成

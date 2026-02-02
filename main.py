@@ -48,8 +48,9 @@ ref = db.collection("users2").document(st.session_state["user_id"]).collection("
 
 if "input" not in st.session_state:
     st.session_state["input"] = ""
-if "placeholder" not in st.session_state:
-    st.session_state["placeholder"] = ""
+if "human_message" not in st.session_state:
+    st.session_state["human_message"] = ""
+
 #time（開始時間）や、messagesがない場合は、一旦firebase上にないか探す
 if "time" not in st.session_state:
     docs = ref.get()
@@ -85,29 +86,29 @@ def show_messages():
                 ''', unsafe_allow_html=True)
 
 
-#送信ボタンが押されたとき
+#firestoreへの保存のためのアクセス
 add_ref = db.collection("users2").document(st.session_state["user_id"]).collection("conversation")
+#送信ボタンが押されたとき
 def send_message():
-    #firestoreへの保存のためのアクセス
-    add_ref = db.collection("users2").document(st.session_state["user_id"]).collection("conversation")
-    input = st.session_state["input"]
-    if input == "":
-        st.session_state["placeholder"] = "メッセージを入力してください！"
+    if st.session_state["human_message"] != "":
         return
+    st.session_state["human_message"] = st.session_state["input"]
     st.session_state["input"] = ""
-    st.session_state["placeholder"] = ""
+
+def add_human_message():
     #新しい入力を追加
-    input_message_data = {"role": "human", "content": input, "timestamp": firestore.SERVER_TIMESTAMP}
-    add_ref.add(input_message_data)
-    #最初の送信だったら、タイマー開始（最初のtimestampを控える）
-    if st.session_state["time"] == None:
-        st.session_state["time"] = ref.get()[0].to_dict()["timestamp"]
+    input_message_data = {"role": "human", "content": st.session_state["human_message"], "timestamp": firestore.SERVER_TIMESTAMP}
     st.session_state["messages"].append(input_message_data)
 
 #応答を生成する関数
 def generate_response():
-    #新しい入力応答を追加
-    bot = ChatBot(llm, user_id = st.session_state["user_id"]) 
+    #新しい人間側の入力をfirebaseに追加
+    input_message_data = {"role": "human", "content": st.session_state["human_message"], "timestamp": firestore.SERVER_TIMESTAMP}
+    add_ref.add(input_message_data)
+    #最初の送信だったら、タイマー開始（最初のtimestampを控える）
+    if st.session_state["time"] == None:
+        st.session_state["time"] = ref.get()[0].to_dict()["timestamp"]
+    bot = ChatBot(llm, user_id = st.session_state["user_id"])
     response = bot.chat(st.session_state["messages"])
     output_message_data = {"role": "ai", "content": response, "timestamp": firestore.SERVER_TIMESTAMP}
     add_ref.add(output_message_data)
@@ -152,6 +153,8 @@ if st.session_state["dialog_finish"] == 2:
                 '<br>会話は終了しました。下のリンクからアンケートに回答ください。',
                 unsafe_allow_html=True
     )
+    if st.session_state["human_message"].strip() != "":
+        add_human_message()
     show_messages()
     st.markdown(
                 f'<br>会話は終了しました。<br><a href="https://nagoyapsychology.qualtrics.com/jfe/form/SV_cRVxcN6bwLThcEK?user_id={st.session_state["user_id"]}">こちら</a>をクリックしてアンケートに答えてください。',
@@ -164,12 +167,9 @@ else: #最初〜会話中の提示
         st.write("**ボットからのお悩み相談に乗りましょう。**")
     else:
         st.write("**人間関係に関するお悩みをボットに相談しましょう。**")
+    if st.session_state["human_message"].strip() != "":
+        add_human_message()
     show_messages()
-    #最後のメッセージが人間だったら応答を生成する関数
-    if st.session_state["messages"][-1]["role"] == "human":
-        generate_response()
-        st.rerun()
-        
 
 with st._bottom:
     left_col, right_col, finish_btn_col = st.columns([4,1,1], vertical_alignment="bottom")
@@ -177,11 +177,24 @@ with st._bottom:
         "input_message",
         key="input",
         height=70,
-        placeholder=st.session_state['placeholder'],
+        placeholder="メッセージを入力",
         label_visibility="collapsed",
     )
+    #送信ボタンをdisabledにするかどうか 
+    send_disabled = st.session_state["human_message"] != ""
     with right_col:
-        st.button("送信", on_click=send_message, use_container_width=True)
+        st.button(
+            "送信",
+            on_click=send_message,
+            use_container_width=True,
+            disabled=send_disabled
+        )
+    
+    #最後のメッセージが人間だったら応答を生成する関数
+    if st.session_state["messages"][-1]["role"] == "human":
+        generate_response()
+        st.session_state["human_message"] = ""
+        st.rerun()
         
     #まだ5分経っておらず、ダイアログが表示される前は、終了ボタンを表示しない。
     if st.session_state["dialog_finish"] == 0:

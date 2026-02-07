@@ -40,7 +40,7 @@ class ChatBot:
         elif int(user_id) % 3 == 2:
             depth = "serious"
             system_prompt = get_consulted_system_prompt(depth)
-        else:
+        else: #AIに相談する条件
             system_prompt = """
                 あなたはAIチャットボットです。人間関係の悩みについて、相手の相談に乗ってください。
                 お悩みに対して深掘りをして状況を把握してから解決策を提示してください。
@@ -76,7 +76,6 @@ class ChatBot:
 
         #グラフのコンパイル
         return graph.compile()
-
 
     #実行
     def chat(self, messages: list):

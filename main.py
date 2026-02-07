@@ -27,10 +27,11 @@ if "user_id" not in st.session_state:
     st.text("学籍番号と名前を入力して、開始ボタンを押してください。")
     user_id = st.text_input("学籍番号")
     user_name = st.text_input("名前")
+
     r = True #開始ボタンは情報入力されないとdisabled
     if user_id.isdigit() and user_name:
         r = False
-        
+    #開始ボタン
     with st.container(horizontal=True, horizontal_alignment="right"):
         if st.button("開始", type="primary", disabled=r):
             st.session_state["user_id"] = user_id
@@ -46,8 +47,10 @@ if "user_id" not in st.session_state:
 #Firestoreのデータへのアクセス
 ref = db.collection("users2").document(st.session_state["user_id"]).collection("conversation").order_by("timestamp")
 
+#メッセージ入力欄に入力されたもの
 if "input" not in st.session_state:
     st.session_state["input"] = ""
+#送信された（ている）メッセージ　※送信中は連投して送信させないようにするためなど
 if "human_message" not in st.session_state:
     st.session_state["human_message"] = ""
 
@@ -71,7 +74,7 @@ if "dialog_finish" not in st.session_state:
 #会話履歴の表示
 def show_messages():
     for i, message in enumerate(st.session_state["messages"]):
-        if message["role"] == "human":
+        if message["role"] == "human": #人間のメッセージ
             st.markdown(f'''
             <div style="display: flex;">
                 <div style="display: flex; margin-left: auto; max-width: 65%;">
@@ -79,7 +82,7 @@ def show_messages():
                 </div>
             </div>
             ''', unsafe_allow_html=True)
-        else:
+        else: #ボットのメッセージ
             with st.chat_message(message["role"]):
                 st.markdown(f'''
                 <div style="max-width: 80%;" class="messages">{message["content"]}</div>
@@ -90,8 +93,10 @@ def show_messages():
 add_ref = db.collection("users2").document(st.session_state["user_id"]).collection("conversation")
 #送信ボタンが押されたとき
 def send_message():
+    #すでに人間側のメッセージ送信処理中の時はブロック
     if st.session_state["human_message"] != "":
         return
+    #送信メッセージされたメッセージに入力欄のメッセージを入れ、入力欄は空にする
     st.session_state["human_message"] = st.session_state["input"]
     st.session_state["input"] = ""
 
@@ -108,8 +113,10 @@ def generate_response():
     #最初の送信だったら、タイマー開始（最初のtimestampを控える）
     if st.session_state["time"] == None:
         st.session_state["time"] = ref.get()[0].to_dict()["timestamp"]
+    #応答生成
     bot = ChatBot(llm, user_id = st.session_state["user_id"])
     response = bot.chat(st.session_state["messages"])
+    #生成された応答をデータに保存
     output_message_data = {"role": "ai", "content": response, "timestamp": firestore.SERVER_TIMESTAMP}
     add_ref.add(output_message_data)
     st.session_state["messages"].append(output_message_data)
@@ -136,7 +143,7 @@ def finish():
             st.session_state["dialog_finish"] = 2
             st.rerun()
 
-#5分経ったら
+#5分経ったら⇧ダイアログ⇧表示
 if st.session_state["time"] != None and datetime.datetime.now(datetime.timezone.utc) - st.session_state["time"] > datetime.timedelta(minutes=5):
     if st.session_state["dialog_finish"] == 0:
         finish()
@@ -150,14 +157,14 @@ if st.session_state["messages"] == [] or st.session_state["messages"][0]["role"]
 #会話終了後
 if st.session_state["dialog_finish"] == 2:
     st.markdown(
-                '<br>会話は終了しました。下のリンクからアンケートに回答ください。',
+                '<br>会話は終了しました。アンケートに戻り回答してください。',
                 unsafe_allow_html=True
     )
     if st.session_state["human_message"].strip() != "":
         add_human_message()
     show_messages()
     st.markdown(
-                f'<br>会話は終了しました。<br><a href="https://nagoyapsychology.qualtrics.com/jfe/form/SV_cRVxcN6bwLThcEK?user_id={st.session_state["user_id"]}">こちら</a>をクリックしてアンケートに答えてください。',
+                f'<br>会話は終了しました。アンケートに戻り回答してください。',
                 unsafe_allow_html=True
     )
     st.stop()
@@ -171,6 +178,7 @@ else: #最初〜会話中の提示
         add_human_message()
     show_messages()
 
+#ページ下部のメッセージ入力欄
 with st._bottom:
     left_col, right_col, finish_btn_col = st.columns([4,1,1], vertical_alignment="bottom")
     left_col.text_area(
@@ -190,16 +198,20 @@ with st._bottom:
             disabled=send_disabled
         )
     
-    #最後のメッセージが人間だったら応答を生成する関数
-    if st.session_state["messages"][-1]["role"] == "human":
-        generate_response()
-        st.session_state["human_message"] = ""
-        st.rerun()
-        
     #まだ5分経っておらず、ダイアログが表示される前は、終了ボタンを表示しない。
     if st.session_state["dialog_finish"] == 0:
+        #最後のメッセージが人間だったら応答を生成する関数
+        if st.session_state["messages"][-1]["role"] == "human":
+            generate_response()
+            st.session_state["human_message"] = ""
+            st.rerun()
         st.stop()
     with finish_btn_col:
-        if st.button("終了", type="primary", use_container_width=True):
+        if st.button("終了", type="primary", use_container_width=True, disabled=send_disabled):
             st.session_state["dialog_finish"] = 2
+            st.rerun()
+        #最後のメッセージが人間だったら応答を生成する関数
+        if st.session_state["messages"][-1]["role"] == "human":
+            generate_response()
+            st.session_state["human_message"] = ""
             st.rerun()

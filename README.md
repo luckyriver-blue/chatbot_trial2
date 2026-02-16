@@ -26,8 +26,8 @@
 
 使用技術
 - 言語：Python
-- LLM：[OpenAI API](#OpenAI) 
-- LLM制御：[LangChain / LangGraph](#LangChain)
+- LLM：[OpenAI API](#OpenAI-API) 
+- LLM制御：[LangChain / LangGraph](#LangChain-/-LangGraph)
 - データベース：[Firebase](#Firebase)
 - フロントエンド：[Streamlit](#Streamlit)
 

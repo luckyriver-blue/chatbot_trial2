@@ -27,7 +27,7 @@
 使用技術
 - 言語：Python
 - LLM：[OpenAI API](#OpenAI-API) 
-- LLM制御：[LangChain / LangGraph](#LangChain-/-LangGraph)
+- LLM制御：[LangChain / LangGraph](#LangChainとLangGraph)
 - データベース：[Firebase](#Firebase)
 - フロントエンド：[Streamlit](#Streamlit)
 
@@ -36,7 +36,7 @@
   実験参加者と会話するAIとして、このOpenAI APIを用い、その中のGPT-4oを使用した。  
   [OpenAI APIの公式ドキュメント](https://developers.openai.com/api/docs) 
    
-### LangChain / LangGraph
+### LangChainとLangGraph
   LangChain  
     LLMを利用したアプリケーション開発を支援するPythonのライブラリであり、プロンプトの管理、会話履歴の保持、LLMのモデル設定などを統合的に扱うことができる。  
     本システムでは、LangChainが提供するプロンプトテンプレート機能を利用し、LLMへの指示と会話履歴を組み合わせたプロンプトを入力するよう設計した。 
